@@ -5,25 +5,39 @@ const mailSender = async (email, title, body) => {
     let transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: 587,
-      secure: false,
-      requireTLS: true,
+      secure: false, // Use STARTTLS
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     })
 
-    let info = await transporter.sendMail({
-      from: `"Studynotion | Kartik Sir" <${process.env.MAIL_USER}>`,
-      to: `${email}`,
-      subject: `${title}`,
-      html: `${body}`,
-    })
+    console.log("Sending email to:", email)
+    
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Email sending timed out after 15s")), 15000)
+    )
+
+    // Race the mail sending against the timeout
+    let info = await Promise.race([
+      transporter.sendMail({
+        from: `"Studynotion | Kartik Sir" <${process.env.MAIL_USER}>`,
+        to: `${email}`,
+        subject: `${title}`,
+        html: `${body}`,
+      }),
+      timeoutPromise
+    ])
+    
     console.log("Email sent successfully:", info.response)
     return info
   } catch (error) {
     console.log("Mail sending error:", error.message)
-    return error.message
+    throw error
   }
 }
 

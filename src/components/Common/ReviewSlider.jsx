@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import ReactStars from "react-rating-stars-component"
 // Import Swiper React components
 import { Swiper, SwiperSlide } from "swiper/react"
+import { Autoplay, FreeMode, Pagination } from "swiper"
 
 // Import Swiper styles
 import "swiper/css"
@@ -10,8 +11,6 @@ import "swiper/css/pagination"
 import "../../App.css"
 // Icons
 import { FaStar } from "react-icons/fa"
-// Import required modules
-import { Autoplay, FreeMode, Pagination } from "swiper"
 
 // Get apiFunction and the endpoint
 import { apiConnector } from "../../services/apiConnector"
@@ -36,16 +35,27 @@ function ReviewSlider() {
   // console.log(reviews)
 
   return (
-    <div className="text-white">
-      <div className="my-[50px] h-[184px] max-w-maxContentTab lg:max-w-maxContent">
+    <div className="text-white w-full">
+      <div className="my-[50px] h-[184px] w-full max-w-maxContentTab lg:max-w-maxContent mx-auto">
         <Swiper
-          slidesPerView={4}
+          slidesPerView={1}
           spaceBetween={25}
           loop={true}
           freeMode={true}
           autoplay={{
             delay: 2500,
             disableOnInteraction: false,
+          }}
+          breakpoints={{
+            640: {
+              slidesPerView: 2,
+            },
+            768: {
+              slidesPerView: 3,
+            },
+            1024: {
+              slidesPerView: 4,
+            },
           }}
           modules={[FreeMode, Pagination, Autoplay]}
           className="w-full "

@@ -1,7 +1,8 @@
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_BASE_URL,
+  baseURL: process.env.REACT_APP_BASE_URL || "http://localhost:4000/api/v1",
+  timeout: 30000, // 30 seconds timeout
 });
 
 export const apiConnector = (method, url, bodyData, headers, params) => {

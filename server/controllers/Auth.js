@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcryptjs")
 const User = require("../models/User")
 const OTP = require("../models/OTP")
 const jwt = require("jsonwebtoken")
@@ -78,7 +78,11 @@ exports.signup = async (req, res) => {
 
     // Create the user
     let approved = ""
-    approved === "Instructor" ? (approved = false) : (approved = true)
+    if (accountType === "Instructor") {
+      approved = false
+    } else {
+      approved = true
+    }
 
     // Create the Additional Profile For User
     const profileDetails = await Profile.create({
@@ -143,7 +147,7 @@ exports.login = async (req, res) => {
     // Generate JWT token and Compare Password
     if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign(
-        { email: user.email, id: user._id, role: user.role },
+        { email: user.email, id: user._id, accountType: user.accountType },
         process.env.JWT_SECRET,
         {
           expiresIn: "24h",
@@ -181,8 +185,16 @@ exports.login = async (req, res) => {
 }
 // Send OTP For Email Verification
 exports.sendotp = async (req, res) => {
+  console.log("RECEIVED SENDOTP REQUEST FOR:", req.body.email)
   try {
     const { email } = req.body
+
+    if (!email) {
+      return res.status(401).json({
+        success: false,
+        message: "Email is required",
+      })
+    }
 
     // Check if user is already present
     // Find user with provided email
@@ -203,28 +215,17 @@ exports.sendotp = async (req, res) => {
       lowerCaseAlphabets: false,
       specialChars: false,
     })
-    let result = await OTP.findOne({ otp: otp })
-    console.log("Result is Generate OTP Func")
-    console.log("OTP", otp)
-    console.log("Result", result)
-    while (result) {
-      otp = otpGenerator.generate(6, {
-        upperCaseAlphabets: false,
-        lowerCaseAlphabets: false,
-        specialChars: false,
-      })
-      result = await OTP.findOne({ otp: otp })
-    }
+    
     const otpPayload = { email, otp }
+
+    console.log("Creating OTP document for:", email)
     const otpBody = await OTP.create(otpPayload)
-    console.log("OTP Body", otpBody)
-    
-    // Send email with OTP
-    await mailSender(email, "OTP Verification Email", otpTemplate(otp))
-    
-    res.status(200).json({
+    console.log("OTP Body created:", otpBody)
+
+    return res.status(200).json({
       success: true,
       message: `OTP Sent Successfully`,
+      otp,
     })
   } catch (error) {
     console.log(error.message)
